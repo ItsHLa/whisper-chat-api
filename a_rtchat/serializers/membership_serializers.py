@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from a_rtchat.models import GroupChat
+from a_rtchat.models.chat_messages_models import *
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -8,14 +8,14 @@ User = get_user_model()
 
 class BaseGroupManagementSerializer(serializers.ModelSerializer):
     users = serializers.PrimaryKeyRelatedField(
-        queryset = User.objects.all().values_list("id", flat=True),
+        queryset = User.objects.all(),
         required = True,
         write_only=True,
         many = True
     )
     
     class Meta:
-        model = GroupChat
+        model = Chat
         fields = ('users',)
     
     def add_users(self):
@@ -36,7 +36,7 @@ class AdminSerializer(BaseGroupManagementSerializer):
         if not group.are_members(users):
             raise serializers.ValidationError({'admins' : ['To ba an admin user should be member in group']})
         
-        if group.check_if_admin(users):
+        if group.are_admins(users):
             raise serializers.ValidationError({'admins' : ['Admins with this accounts already exists']})
        
         group.add_admins(users)
@@ -45,22 +45,22 @@ class AdminSerializer(BaseGroupManagementSerializer):
         users = self.validated_data['users']
         group = self.validated_data['group']
         
-        if not group.check_if_admin(users):
+        if not group.are_admins(users):
             raise serializers.ValidationError({'admins' : ['Admins with this accounts dose not exists']})
-        group.remove_admins(users)
+        group.remove_admin(users)
 
 class MembersSerializer(BaseGroupManagementSerializer):
     
     def add_users(self):
         group = self.validated_data['group']
         users = self.validated_data['users']
-        if group.members.filter(id__in = users).exists():
+        if group.are_members(users):
             raise serializers.ValidationError({'members' : 'Members with this accounts already exists'})
-        group.members.add(*users)
+        group.add_members(users)
     
     def remove_users(self):
         group = self.validated_data['group']
         users = self.validated_data['users']
-        if not group.members.filter(id__in = users).exists():
+        if not group.are_members(users):
             raise serializers.ValidationError({'members' : 'Members with this accounts dose not exists'})
-        group.members.remove(*users)
+        group.remove_membership(users)

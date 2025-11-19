@@ -4,7 +4,8 @@ from .views import *
 
 router = routers.DefaultRouter()
 
-router.register('groups', GroupChatViewSet, basename='list-create-group-chat')
+router.register('', ChatViewSet, basename='chats')
+router.register('folders', ChatFolderViewSet, basename='folders')
 
 
 urlpatterns = [
