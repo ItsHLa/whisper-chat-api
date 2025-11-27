@@ -56,7 +56,6 @@ class MessagesWebsocketConsumer(WebsocketConsumer):
         
         self.notify_chat(event)
         
-    
     def receive(self, text_data=None, bytes_data=None):
         data = json.loads(text_data)
         
@@ -78,8 +77,7 @@ class MessagesWebsocketConsumer(WebsocketConsumer):
         
         # send msg to chat
         self.notify_chat(event)
-         
-    
+           
     def disconnect(self, code):
         
         if self.chat.is_online(self.user):

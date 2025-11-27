@@ -33,5 +33,10 @@ class ChatMembership(models.Model):
                 ),]
     
     def __str__(self) -> str:
-        return f"role : admin: {self.is_admin}, owner:{self.is_owner}, member:{self.is_member}"
+        role = 'member'
+        if self.is_admin : 
+            role = 'admin'
+        if self.is_owner:
+            role = 'owner'
+        return f" user : {self.user.id} | chat: {self.chat.id} | role : {role}"
     

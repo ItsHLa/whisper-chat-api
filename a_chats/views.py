@@ -53,7 +53,7 @@ class ChatViewSet(ModelViewSet):
         print(self.action)
         if self.action in ['destroy', 'remove_admins', 'add_admins' ] :
             return [IsAuthenticated(), IsGroupOwner()]
-        if self.action in ['retrieve','add_members']:
+        if self.action in ['retrieve','add_members', 'leave']:
             return [IsAuthenticated(), IsGroupMember()]
         if self.action in ['join', 'create']:
             return [AllowAny()]
@@ -71,6 +71,12 @@ class ChatViewSet(ModelViewSet):
     def join(self, request, pk):
         group = get_object_or_404(Chat, id=pk, is_private=False)
         group.add_members([request.user])
+        return Response(status= HTTP_200_OK)
+    
+    @action(detail=True, methods=['delete'] )
+    def leave(self, request, pk):
+        group = get_object_or_404(Chat, id=pk, is_private = False)
+        group.remove_membership([request.user])
         return Response(status= HTTP_200_OK)
     
     # Member + list, get

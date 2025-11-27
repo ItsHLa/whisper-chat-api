@@ -25,8 +25,6 @@ class ChatDetailRepresentationMixin:
             return f'{other.first_name} {other.last_name}'  
         return obj.name
     
-
-
 class ChatRepresentationMixin:
         
     def to_representation(self, instance):
