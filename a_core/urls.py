@@ -8,6 +8,7 @@ urlpatterns = [
     path('api/', include('a_users.urls')),
     path('api/', include("djoser.urls")),
     
-    #GroupChat
+    #Chats & Messages
     path('api/chats/', include('a_chats.urls')),
+    
 ]

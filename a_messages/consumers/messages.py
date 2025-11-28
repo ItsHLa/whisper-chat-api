@@ -5,7 +5,7 @@ from a_messages.models.chat_messages import ChatMessage
 from a_messages.serializers.chat_message import *
 from asgiref.sync import async_to_sync
 import json
-from rest_framework_simplejwt.tokens import RefreshToken
+
 
 
 class MessagesWebsocketConsumer(WebsocketConsumer):
@@ -57,26 +57,8 @@ class MessagesWebsocketConsumer(WebsocketConsumer):
         self.notify_chat(event)
         
     def receive(self, text_data=None, bytes_data=None):
-        data = json.loads(text_data)
-        
-        # create messags
-        msg = ChatMessage.objects.create(
-            chat = self.chat,
-            user=self.user,
-            **data)
-        
-        # serializer message
-        serializer = ChatMessageSerializer(msg)
-        event = {
-            'type' : 'send.response',
-            'response' : {
-                'type' : 'new_message',
-                **serializer.data
-            }
-        }
-        
-        # send msg to chat
-        self.notify_chat(event)
+       pass
+    
            
     def disconnect(self, code):
         
