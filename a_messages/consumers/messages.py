@@ -15,23 +15,29 @@ class MessagesWebsocketConsumer(WebsocketConsumer):
     
     def connect(self):
         try:
-            kwargs = self.scope['url_route']['kwargs']
+            # get user from scope
+            self.user = self.scope['user']
+            print(self.user.id)
+            if self.user.is_anonymous:
+                self.close()
+                return
             
-        # get pk from scope kwargs
-            pk = kwargs['pk']
+            # get pk from scope kwargs
+            pk = self.scope['url_route']['kwargs']['pk']
             
-        # get chat
+            # get chat
             self.chat = get_object_or_404(Chat, id=pk)
+            self.chat_room =  f'chat{self.chat.pk}'
+        
             
-        # get user from scope
-            self.user = User.objects.get(id=2)
             
-        # create channel for each websocket connection using unique uuid
+            # create channel for each websocket connection using unique uuid
             async_to_sync(self.channel_layer.group_add)(
-            f'chat{self.chat.pk}', # group-name
+            self.chat_room, # group-name
             self.channel_name)
         
             if not self.chat.is_online(self.user):
+                print(f'{self.user.id} is online')
                 self.chat.online.add(self.user) # add to online users
                 self.track_online_user() # update online users
            
@@ -43,7 +49,7 @@ class MessagesWebsocketConsumer(WebsocketConsumer):
     
     def notify_chat(self, event):
         async_to_sync(self.channel_layer.group_send)(
-            f'chat{self.chat.pk}',
+            self.chat_room,
             event)
     
     def track_online_user(self):
@@ -53,20 +59,38 @@ class MessagesWebsocketConsumer(WebsocketConsumer):
                 'type' : 'update_online_count',
                 'online_count' : self.chat.online_count}
         }
-        
         self.notify_chat(event)
+    
+    def get_typing_event(self, is_typing = False):
+        event = {'type' :'send.response',
+                 'response' : {
+                     'type' : 'typing',
+                     'is_typing' : is_typing,
+                     'user' : {'id' : self.user.pk,
+                               'name' :f'{self.user.first_name} {self.user.last_name}'}}}
+        return event
         
     def receive(self, text_data=None, bytes_data=None):
-       pass
-    
+        data = json.loads(text_data)
+        type = data['type']
+        
+        event = None
+        if type == 'start_typing':
+            event = self.get_typing_event(True)
+        if type == 'stop_typing':
+            event = self.get_typing_event(False)
+        
+        if event:
+            self.notify_chat(event)
            
     def disconnect(self, code):
         
         if self.chat.is_online(self.user):
+            print(self.chat.is_online(self.user))
             self.chat.online.remove(self.user)
             self.track_online_user()
             
         async_to_sync(self.channel_layer.group_discard(
-            f'chat{self.chat.pk}',
+             self.chat_room,
             self.channel_name
         ))
